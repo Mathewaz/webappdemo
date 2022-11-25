@@ -15,31 +15,33 @@ if (interactive()) {
       ),
       mainPanel(
         tableOutput("contents"),
-        checkboxInput("somevalue", "Some value", FALSE),
       )
     )
   )
   
   server <- function(input, output) {
-    output$contents <- renderTable({
-      # input$file1 will be NULL initially. After the user selects
-      # and uploads a file, it will be a data frame with 'name',
-      # 'size', 'type', and 'datapath' columns. The 'datapath'
-      # column will contain the local filenames where the data can
-      # be found.
-      inFile <- input$file1
-      
-      if (is.null(inFile))
-        return(NULL)
-      
-      head(read.csv(inFile$datapath, header = input$header))
-    })
-    output$txt <- renderText({
-      icons <- paste(input$icons, collapse = ", ")
-      paste("You chose", icons)
+    
+    #define reactive variabel 
+    v <- reactiveValues(data = NULL)
+    mydata<-reactive({
+      v$data
     })
     
+    
+    #makes our csv input into v$data
+    observeEvent(input$file1, {
+      v$data <- ({
+        inData <- input$file1
+        if (is.null(inData)){ return(NULL) }
+        read.csv(inData$datapath, header = TRUE, sep=",")
+      })
+      
+    }) 
+    
+    #making the output the head of our data
+    output$contents <- renderTable({
+      head(v$data)
+    })
   }
-  
   shinyApp(ui, server)
 }
